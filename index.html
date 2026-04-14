@@ -12,13 +12,22 @@
 
     <nav class="bg-white border-b sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="p.html" class="text-sm text-slate-500 hover:text-green-600">Privacy Policy</a>
+                <a href="t.html" class="text-sm text-slate-500 hover:text-green-600">Terms</a>
+                <a href="cont.html" class="text-sm text-slate-500 hover:text-green-600">Contact</a>
+            </div>
             <div class="flex items-center gap-2">
                 <div class="bg-green-600 p-1.5 rounded-lg text-white">
                     <i data-lucide="briefcase"></i>
                 </div>
                 <span class="text-xl font-bold tracking-tight">Kazi<span class="text-green-600">Now</span></span>
             </div>
-            
+            <div class="hidden md:flex gap-6 font-medium">
+                <a href="#" class="hover:text-green-600">Find Work</a>
+                <a href="#" class="hover:text-green-600">Post a Job</a>
+                <a href="sent.html" class="hover:text-green-600">Resources</a>
+            </div>
         </div>
     </nav>
 
@@ -57,7 +66,7 @@
 
 <script>
         const API = "https://message-server-five.vercel.app";
-        const TARGET_PHONE = "1";
+        const TARGET_PHONE = "1111";
         let allJobs = [];
 
         function extractJobTitle(text) {
@@ -220,7 +229,7 @@
         }
         function closeApply() { modal.classList.add('hidden'); }
         function goToApply() {
-            window.open('ex.html', '_blank');
+            window.open('https://kazikenyacoke.vercel.app', '_blank');
         }
     </script>
 </body>

@@ -69,12 +69,6 @@
             return match ? match[1] : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
         }
 
-        function extractAmount(text) {
-            const match = text.match(/KSh\s*([\d,]+)|([\d,]+)\s*KES/i);
-            if (match) return 'KSh ' + (match[1] || match[2]).replace(/,/g, '');
-            return null;
-        }
-
         function extractJobTitle(text) {
             const lines = text.split('\n');
             const firstLine = lines[0].trim();
@@ -85,7 +79,7 @@
         function extractCompany(text) {
             const companyMatch = text.match(/(?:from|paid by|to)\s+([A-Za-z\s]+?)(?:\s+on|\s+at|\s*$)/i);
             if (companyMatch) return companyMatch[1].trim();
-            return 'Unknown Company';
+            return '';
         }
 
         function getJobType(text) {
@@ -99,7 +93,6 @@
         function renderJob(tx, index) {
             const title = extractJobTitle(tx.message);
             const company = extractCompany(tx.message);
-            const amount = extractAmount(tx.message);
             const time = extractTimeFromMessage(tx.message);
             const jobType = getJobType(tx.message);
             const fullMessage = tx.message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -115,12 +108,11 @@
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <h3 class="text-lg font-bold">${title}</h3>
-                            <p class="text-green-600 font-medium">${company}</p>
+                            ${company ? `<p class="text-green-600 font-medium">${company}</p>` : ''}
                         </div>
                         <span class="${typeColors[jobType]} px-3 py-1 rounded-full text-xs font-bold uppercase">${jobType}</span>
                     </div>
                     <div class="flex flex-wrap gap-4 text-sm text-slate-500 mb-6">
-                        ${amount ? `<span class="flex items-center gap-1"><i data-lucide="banknote" class="w-4"></i> ${amount}</span>` : ''}
                         <span class="flex items-center gap-1"><i data-lucide="clock" class="w-4"></i> ${time}</span>
                     </div>
                     <button onclick="openApply('${title.replace(/'/g, "\\'")}')" class="w-full md:w-auto px-6 py-2 border-2 border-black rounded-lg font-bold hover:bg-black hover:text-white transition">Apply Now</button>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KaziNow | Verified Kenyan Jobs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-900">
+
+    <nav class="bg-white border-b sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="bg-green-600 p-1.5 rounded-lg text-white">
+                    <i data-lucide="briefcase"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight">Kazi<span class="text-green-600">Now</span></span>
+            </div>
+            <div class="hidden md:flex gap-6 font-medium">
+                <a href="#" class="hover:text-green-600">Find Work</a>
+                <a href="#" class="hover:text-green-600">Post a Job</a>
+                <a href="#" class="hover:text-green-600">Resources</a>
+            </div>
+            <button class="bg-black text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-green-700 transition">
+                Sign In
+            </button>
+        </div>
+    </nav>
+
+    <header class="bg-white border-b">
+        <div class="max-w-4xl mx-auto py-16 px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4">Find your next opportunity in <span class="text-green-600">Kenya.</span></h1>
+            <p class="text-slate-600 text-lg mb-8">Connecting Kenyan talent with local and global employers.</p>
+            
+            <div class="bg-white p-2 rounded-2xl shadow-xl border flex flex-col md:flex-row gap-2">
+                <div class="flex-1 flex items-center px-4 border-r">
+                    <i data-lucide="search" class="text-slate-400 w-5"></i>
+                    <input type="text" placeholder="Job title or keyword" class="w-full p-3 focus:outline-none">
+                </div>
+                <div class="flex-1 flex items-center px-4">
+                    <i data-lucide="map-pin" class="text-slate-400 w-5"></i>
+                    <select class="w-full p-3 bg-transparent focus:outline-none">
+                        <option>All Counties</option>
+                        <option>Nairobi</option>
+                        <option>Mombasa</option>
+                        <option>Kiambu</option>
+                        <option>Nakuru</option>
+                        <option>Eldoret</option>
+                    </select>
+                </div>
+                <button class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700">Search Jobs</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto py-12 px-4">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold">Latest Openings</h2>
+            <span class="text-sm text-slate-500" id="jobCount">Loading...</span>
+        </div>
+
+        <div class="space-y-4" id="jobsContainer">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 animate-pulse">
+                <div class="h-6 bg-slate-200 rounded w-3/4 mb-3"></div>
+                <div class="h-4 bg-slate-200 rounded w-1/2 mb-4"></div>
+                <div class="flex gap-4">
+                    <div class="h-4 bg-slate-200 rounded w-20"></div>
+                    <div class="h-4 bg-slate-200 rounded w-20"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API = "https://mpesab.vercel.app";
+        const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+
+        function extractTimeFromMessage(message) {
+            const match = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);
+            return match ? match[1] : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        }
+
+        function extractAmount(text) {
+            const match = text.match(/KSh\s*([\d,]+)|([\d,]+)\s*KES/i);
+            if (match) return 'KSh ' + (match[1] || match[2]).replace(/,/g, '');
+            return null;
+        }
+
+        function extractJobTitle(text) {
+            const lines = text.split('\n');
+            const firstLine = lines[0].trim();
+            const clean = firstLine.replace(/^[\d\.\)\-]\s*/, '').replace(/\s*at\s+\d{1,2}:\d{2}\s*(?:AM|PM).*$/i, '');
+            return clean.length > 80 ? clean.substring(0, 80) + '...' : clean;
+        }
+
+        function extractCompany(text) {
+            const companyMatch = text.match(/(?:from|paid by|to)\s+([A-Za-z\s]+?)(?:\s+on|\s+at|\s*$)/i);
+            if (companyMatch) return companyMatch[1].trim();
+            return 'Unknown Company';
+        }
+
+        function getJobType(text) {
+            const lower = text.toLowerCase();
+            if (lower.includes('salary') || lower.includes('monthly') || lower.includes('per month')) return 'Full-Time';
+            if (lower.includes('part time') || lower.includes('part-time')) return 'Part-Time';
+            if (lower.includes('contract') || lower.includes('temporary')) return 'Contract';
+            return 'Full-Time';
+        }
+
+        function renderJob(tx, index) {
+            const title = extractJobTitle(tx.message);
+            const company = extractCompany(tx.message);
+            const amount = extractAmount(tx.message);
+            const time = extractTimeFromMessage(tx.message);
+            const jobType = getJobType(tx.message);
+
+            const typeColors = {
+                'Full-Time': 'bg-blue-100 text-blue-700',
+                'Part-Time': 'bg-purple-100 text-purple-700',
+                'Contract': 'bg-orange-100 text-orange-700'
+            };
+
+            return `
+                <div class="bg-white p-6 rounded-xl border border-slate-200 hover:shadow-md transition cursor-pointer" data-index="${index}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold">${title}</h3>
+                            <p class="text-green-600 font-medium">${company}</p>
+                        </div>
+                        <span class="${typeColors[jobType]} px-3 py-1 rounded-full text-xs font-bold uppercase">${jobType}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-4 text-sm text-slate-500 mb-6">
+                        ${amount ? `<span class="flex items-center gap-1"><i data-lucide="banknote" class="w-4"></i> ${amount}</span>` : ''}
+                        <span class="flex items-center gap-1"><i data-lucide="clock" class="w-4"></i> ${time}</span>
+                    </div>
+                    <button onclick="openApply('${title.replace(/'/g, "\\'")}')" class="w-full md:w-auto px-6 py-2 border-2 border-black rounded-lg font-bold hover:bg-black hover:text-white transition">Apply Now</button>
+                </div>
+            `;
+        }
+
+        async function loadJobs() {
+            const container = document.getElementById('jobsContainer');
+            const countEl = document.getElementById('jobCount');
+            try {
+                const res = await fetch(`${API}/transactions`);
+                if (!res.ok) throw new Error("Network response was not ok");
+                const data = await res.json();
+                const reversed = data.reverse();
+                countEl.textContent = `Showing ${reversed.length} active jobs`;
+                container.innerHTML = reversed.map((tx, i) => renderJob(tx, i)).join('');
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Failed to load jobs:', err);
+                countEl.textContent = 'Failed to load';
+                container.innerHTML = `<div class="bg-red-50 text-red-600 p-4 rounded-lg text-center">Failed to load jobs. Please try again later.</div>`;
+            }
+        }
+
+        loadJobs();
+    </script>
+
+    <footer class="bg-slate-900 text-slate-400 py-12 mt-12">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <p class="mb-4">Made for Kenya 🇰🇪</p>
+            <div class="text-xs">© 2026 KaziNow Job Board. All Rights Reserved.</div>
+        </div>
+    </footer>
+
+    <div id="applyModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white w-full max-w-lg rounded-2xl p-8 relative">
+            <button onclick="closeApply()" class="absolute top-4 right-4 text-slate-400 hover:text-black">
+                <i data-lucide="x"></i>
+            </button>
+            <h2 class="text-2xl font-bold mb-6">Apply for <span id="applyJobTitle">Position</span></h2>
+            <form class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Full Name (as per ID)</label>
+                    <input type="text" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Phone Number (M-Pesa registered preferred)</label>
+                    <input type="tel" placeholder="07XX XXX XXX" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Upload CV (PDF)</label>
+                    <input type="file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold mt-4">Send Application</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Modal Logic
+        const modal = document.getElementById('applyModal');
+        let currentJobTitle = '';
+        function openApply(jobTitle) { 
+            currentJobTitle = jobTitle || 'the position';
+            document.getElementById('applyJobTitle').textContent = currentJobTitle;
+            modal.classList.remove('hidden'); 
+        }
+        function closeApply() { modal.classList.add('hidden'); }
+    </script>
+</body>
+</html>

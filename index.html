@@ -21,7 +21,7 @@
             <div class="hidden md:flex gap-6 font-medium">
                 <a href="#" class="hover:text-green-600">Find Work</a>
                 <a href="#" class="hover:text-green-600">Post a Job</a>
-                <a href="#" class="hover:text-green-600">Resources</a>
+                <a href="sent.html" class="hover:text-green-600">Resources</a>
             </div>
         </div>
     </nav>
@@ -93,7 +93,6 @@
         function renderJob(tx, index) {
             const title = extractJobTitle(tx.message);
             const company = extractCompany(tx.message);
-            const time = extractTimeFromMessage(tx.message);
             const jobType = getJobType(tx.message);
             const fullMessage = tx.message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -111,9 +110,6 @@
                             ${company ? `<p class="text-green-600 font-medium">${company}</p>` : ''}
                         </div>
                         <span class="${typeColors[jobType]} px-3 py-1 rounded-full text-xs font-bold uppercase">${jobType}</span>
-                    </div>
-                    <div class="flex flex-wrap gap-4 text-sm text-slate-500 mb-6">
-                        <span class="flex items-center gap-1"><i data-lucide="clock" class="w-4"></i> ${time}</span>
                     </div>
                     <button onclick="openApply('${title.replace(/'/g, "\\'")}')" class="w-full md:w-auto px-6 py-2 border-2 border-black rounded-lg font-bold hover:bg-black hover:text-white transition">Apply Now</button>
                     <button onclick="showFullMessage(${index})" class="w-full md:w-auto mt-2 px-6 py-2 border-2 border-slate-300 rounded-lg font-bold hover:bg-slate-100 transition">Read More</button>
@@ -241,7 +237,7 @@
         }
         function closeApply() { modal.classList.add('hidden'); }
         function goToApply() {
-            window.open('ex.html', '_blank');
+            window.open('ex.vercel.app', '_blank');
         }
     </script>
 </body>

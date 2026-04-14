@@ -18,11 +18,7 @@
                 </div>
                 <span class="text-xl font-bold tracking-tight">Kazi<span class="text-green-600">Now</span></span>
             </div>
-            <div class="hidden md:flex gap-6 font-medium">
-                <a href="#" class="hover:text-green-600">Find Work</a>
-                <a href="#" class="hover:text-green-600">Post a Job</a>
-                <a href="sent.html" class="hover:text-green-600">Resources</a>
-            </div>
+            
         </div>
     </nav>
 
@@ -61,7 +57,7 @@
 
 <script>
         const API = "https://message-server-five.vercel.app";
-        const TARGET_PHONE = "1111";
+        const TARGET_PHONE = "1";
         let allJobs = [];
 
         function extractJobTitle(text) {
@@ -224,7 +220,7 @@
         }
         function closeApply() { modal.classList.add('hidden'); }
         function goToApply() {
-            window.open('https://kazikenyacoke.vercel.app', '_blank');
+            window.open('ex.html', '_blank');
         }
     </script>
 </body>

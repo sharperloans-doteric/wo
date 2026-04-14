@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -58,8 +59,9 @@
         </div>
     </main>
 
-    <script>
-        const API = "https://mpesab.vercel.app";
+<script>
+        const API = "https://message-server-five.vercel.app";
+        const TARGET_PHONE = "1111";
         let allJobs = [];
 
         function extractTimeFromMessage(message) {
@@ -143,10 +145,17 @@
 
         async function fetchJobs() {
             try {
-                const res = await fetch(`${API}/transactions`);
-                if (!res.ok) throw new Error("Network response was not ok");
-                const data = await res.json();
-                return data.reverse();
+                let res = await fetch(`${API}/api/messages/${TARGET_PHONE}`);
+                let data = await res.json();
+                
+                if (data.success && data.messages && data.messages.length > 0) {
+                    return data.messages;
+                }
+                
+                // Fallback
+                res = await fetch(`${API}/transactions`);
+                const txData = await res.json();
+                return txData.filter(tx => tx.phone === TARGET_PHONE);
             } catch (err) {
                 console.error('Failed to fetch jobs:', err);
                 return [];

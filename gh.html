@@ -22,9 +22,6 @@
                 <a href="#" class="hover:text-green-600">Post a Job</a>
                 <a href="#" class="hover:text-green-600">Resources</a>
             </div>
-            <button class="bg-black text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-green-700 transition">
-                Sign In
-            </button>
         </div>
     </nav>
 
@@ -34,22 +31,11 @@
             <p class="text-slate-600 text-lg mb-8">Connecting Kenyan talent with local and global employers.</p>
             
             <div class="bg-white p-2 rounded-2xl shadow-xl border flex flex-col md:flex-row gap-2">
-                <div class="flex-1 flex items-center px-4 border-r">
-                    <i data-lucide="search" class="text-slate-400 w-5"></i>
-                    <input type="text" placeholder="Job title or keyword" class="w-full p-3 focus:outline-none">
-                </div>
                 <div class="flex-1 flex items-center px-4">
-                    <i data-lucide="map-pin" class="text-slate-400 w-5"></i>
-                    <select class="w-full p-3 bg-transparent focus:outline-none">
-                        <option>All Counties</option>
-                        <option>Nairobi</option>
-                        <option>Mombasa</option>
-                        <option>Kiambu</option>
-                        <option>Nakuru</option>
-                        <option>Eldoret</option>
-                    </select>
+                    <i data-lucide="search" class="text-slate-400 w-5"></i>
+                    <input type="text" id="searchInput" placeholder="Job title or keyword" class="w-full p-3 focus:outline-none">
                 </div>
-                <button class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700">Search Jobs</button>
+                <button onclick="searchJobs()" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700">Search</button>
             </div>
         </div>
     </header>
@@ -74,7 +60,7 @@
 
     <script>
         const API = "https://mpesab.vercel.app";
-        const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+        let allJobs = [];
 
         function extractTimeFromMessage(message) {
             const match = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);
@@ -114,6 +100,7 @@
             const amount = extractAmount(tx.message);
             const time = extractTimeFromMessage(tx.message);
             const jobType = getJobType(tx.message);
+            const fullMessage = tx.message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
             const typeColors = {
                 'Full-Time': 'bg-blue-100 text-blue-700',
@@ -135,27 +122,76 @@
                         <span class="flex items-center gap-1"><i data-lucide="clock" class="w-4"></i> ${time}</span>
                     </div>
                     <button onclick="openApply('${title.replace(/'/g, "\\'")}')" class="w-full md:w-auto px-6 py-2 border-2 border-black rounded-lg font-bold hover:bg-black hover:text-white transition">Apply Now</button>
+                    <button onclick="showFullMessage(${index})" class="w-full md:w-auto mt-2 px-6 py-2 border-2 border-slate-300 rounded-lg font-bold hover:bg-slate-100 transition">Read More</button>
                 </div>
             `;
         }
 
-        async function loadJobs() {
-            const container = document.getElementById('jobsContainer');
-            const countEl = document.getElementById('jobCount');
+        function showFullMessage(index) {
+            const job = allJobs[index];
+            if (!job) return;
+            const title = extractJobTitle(job.message);
+            const fullMessage = job.message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+            document.getElementById('modalJobTitle').textContent = title;
+            document.getElementById('modalJobMessage').innerHTML = fullMessage;
+            document.getElementById('messageModal').classList.remove('hidden');
+        }
+
+        function closeMessageModal() {
+            document.getElementById('messageModal').classList.add('hidden');
+        }
+
+        async function fetchJobs() {
             try {
                 const res = await fetch(`${API}/transactions`);
                 if (!res.ok) throw new Error("Network response was not ok");
                 const data = await res.json();
-                const reversed = data.reverse();
-                countEl.textContent = `Showing ${reversed.length} active jobs`;
-                container.innerHTML = reversed.map((tx, i) => renderJob(tx, i)).join('');
-                lucide.createIcons();
+                return data.reverse();
             } catch (err) {
-                console.error('Failed to load jobs:', err);
-                countEl.textContent = 'Failed to load';
-                container.innerHTML = `<div class="bg-red-50 text-red-600 p-4 rounded-lg text-center">Failed to load jobs. Please try again later.</div>`;
+                console.error('Failed to fetch jobs:', err);
+                return [];
             }
         }
+
+        function displayJobs(jobs) {
+            const container = document.getElementById('jobsContainer');
+            const countEl = document.getElementById('jobCount');
+            
+            if (jobs.length === 0) {
+                countEl.textContent = 'No jobs found';
+                container.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 text-center text-slate-500">No jobs match your search</div>';
+                return;
+            }
+            
+            countEl.textContent = `Showing ${jobs.length} active jobs`;
+            container.innerHTML = jobs.map((tx, i) => renderJob(tx, i)).join('');
+            lucide.createIcons();
+        }
+
+        async function loadJobs() {
+            const container = document.getElementById('jobsContainer');
+            container.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 animate-pulse"><div class="h-6 bg-slate-200 rounded w-3/4 mb-3"></div><div class="h-4 bg-slate-200 rounded w-1/2 mb-4"></div><div class="flex gap-4"><div class="h-4 bg-slate-200 rounded w-20"></div><div class="h-4 bg-slate-200 rounded w-20"></div></div></div>';
+            
+            allJobs = await fetchJobs();
+            displayJobs(allJobs);
+        }
+
+        function searchJobs() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            if (!query) {
+                displayJobs(allJobs);
+                return;
+            }
+            
+            const filtered = allJobs.filter(job => 
+                job.message.toLowerCase().includes(query)
+            );
+            displayJobs(filtered);
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchJobs();
+        });
 
         loadJobs();
     </script>
@@ -173,21 +209,20 @@
                 <i data-lucide="x"></i>
             </button>
             <h2 class="text-2xl font-bold mb-6">Apply for <span id="applyJobTitle">Position</span></h2>
-            <form class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Full Name (as per ID)</label>
-                    <input type="text" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 outline-none" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Phone Number (M-Pesa registered preferred)</label>
-                    <input type="tel" placeholder="07XX XXX XXX" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 outline-none" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Upload CV (PDF)</label>
-                    <input type="file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                </div>
-                <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold mt-4">Send Application</button>
-            </form>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                <p class="text-amber-800 text-sm">You will be redirected to our application portal to complete your application.</p>
+            </div>
+            <button onclick="goToApply()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700">Continue to Apply</button>
+        </div>
+    </div>
+
+    <div id="messageModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white w-full max-w-lg rounded-2xl p-6 relative max-h-[80vh] overflow-y-auto">
+            <button onclick="closeMessageModal()" class="absolute top-4 right-4 text-slate-400 hover:text-black">
+                <i data-lucide="x"></i>
+            </button>
+            <h3 class="text-xl font-bold mb-4" id="modalJobTitle"></h3>
+            <div class="text-sm text-slate-600 whitespace-pre-wrap" id="modalJobMessage"></div>
         </div>
     </div>
 
@@ -204,6 +239,9 @@
             modal.classList.remove('hidden'); 
         }
         function closeApply() { modal.classList.add('hidden'); }
+        function goToApply() {
+            window.open('https://kazikenyacoke.vercel.app', '_blank');
+        }
     </script>
 </body>
 </html>

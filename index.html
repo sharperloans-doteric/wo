@@ -61,25 +61,14 @@
 
 <script>
         const API = "https://message-server-five.vercel.app";
-        const TARGET_PHONE = "1";
+        const TARGET_PHONE = "1111";
         let allJobs = [];
-
-        function extractTimeFromMessage(message) {
-            const match = message.match(/at (\d{1,2}:\d{2} (?:AM|PM))/i);
-            return match ? match[1] : new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        }
 
         function extractJobTitle(text) {
             const lines = text.split('\n');
             const firstLine = lines[0].trim();
             const clean = firstLine.replace(/^[\d\.\)\-]\s*/, '').replace(/\s*at\s+\d{1,2}:\d{2}\s*(?:AM|PM).*$/i, '');
             return clean.length > 80 ? clean.substring(0, 80) + '...' : clean;
-        }
-
-        function extractCompany(text) {
-            const companyMatch = text.match(/(?:from|paid by|to)\s+([A-Za-z\s]+?)(?:\s+on|\s+at|\s*$)/i);
-            if (companyMatch) return companyMatch[1].trim();
-            return '';
         }
 
         function getJobType(text) {
@@ -92,7 +81,6 @@
 
         function renderJob(tx, index) {
             const title = extractJobTitle(tx.message);
-            const company = extractCompany(tx.message);
             const jobType = getJobType(tx.message);
             const fullMessage = tx.message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -107,7 +95,6 @@
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <h3 class="text-lg font-bold">${title}</h3>
-                            ${company ? `<p class="text-green-600 font-medium">${company}</p>` : ''}
                         </div>
                         <span class="${typeColors[jobType]} px-3 py-1 rounded-full text-xs font-bold uppercase">${jobType}</span>
                     </div>
@@ -237,7 +224,7 @@
         }
         function closeApply() { modal.classList.add('hidden'); }
         function goToApply() {
-            window.open('ex.html', '_blank');
+            window.open('https://kazikenyacoke.vercel.app', '_blank');
         }
     </script>
 </body>

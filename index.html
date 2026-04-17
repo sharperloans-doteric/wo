@@ -8,7 +8,6 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-50 font-sans text-slate-900">
-
     <nav class="bg-white border-b sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -16,7 +15,7 @@
                     <i data-lucide="briefcase"></i>
                 </div>
                 <span class="text-xl font-bold tracking-tight">Kazi<span class="text-green-600">Now</span></span>
-          
+            </div>
             <div class="flex items-center gap-4">
                 <a href="p.html" class="text-sm text-slate-500 hover:text-green-600">Privacy Policy</a>
                 <a href="t.html" class="text-sm text-slate-500 hover:text-green-600">Terms</a>
@@ -29,7 +28,7 @@
         <div class="max-w-4xl mx-auto py-16 px-4 text-center">
             <h1 class="text-4xl md:text-5xl font-extrabold mb-4">Find your next opportunity in <span class="text-green-600">Kenya.</span></h1>
             <p class="text-slate-600 text-lg mb-8">Connecting Kenyan talent with local and global employers.</p>
-            
+           
             <div class="bg-white p-2 rounded-2xl shadow-xl border flex flex-col md:flex-row gap-2">
                 <div class="flex-1 flex items-center px-4">
                     <i data-lucide="search" class="text-slate-400 w-5"></i>
@@ -45,20 +44,12 @@
             <h2 class="text-2xl font-bold">Latest Openings</h2>
             <span class="text-sm text-slate-500" id="jobCount">Loading...</span>
         </div>
-
         <div class="space-y-4" id="jobsContainer">
-            <div class="bg-white p-6 rounded-xl border border-slate-200 animate-pulse">
-                <div class="h-6 bg-slate-200 rounded w-3/4 mb-3"></div>
-                <div class="h-4 bg-slate-200 rounded w-1/2 mb-4"></div>
-                <div class="flex gap-4">
-                    <div class="h-4 bg-slate-200 rounded w-20"></div>
-                    <div class="h-4 bg-slate-200 rounded w-20"></div>
-                </div>
-            </div>
+            <!-- Jobs will be injected here -->
         </div>
     </main>
 
-<script>
+    <script>
         const API = "https://message-server-five.vercel.app";
         const TARGET_PHONE = "1";
         let allJobs = [];
@@ -79,8 +70,14 @@
                     <div class="mb-4">
                         <h3 class="text-lg font-bold">${title}</h3>
                     </div>
-                    <button onclick="openApply('${title.replace(/'/g, "\\'")}')" class="w-full md:w-auto px-6 py-2 border-2 border-black rounded-lg font-bold hover:bg-black hover:text-white transition">Apply Now</button>
-                    <button onclick="showFullMessage(${index})" class="w-full md:w-auto mt-2 px-6 py-2 border-2 border-slate-300 rounded-lg font-bold hover:bg-slate-100 transition">Read More</button>
+                    <button onclick="openApply('${title.replace(/'/g, "\\'")}')" 
+                            class="w-full md:w-auto px-6 py-2 border-2 border-black rounded-lg font-bold hover:bg-black hover:text-white transition">
+                        Apply Now
+                    </button>
+                    <button onclick="showFullMessage(${index})" 
+                            class="w-full md:w-auto mt-2 px-6 py-2 border-2 border-slate-300 rounded-lg font-bold hover:bg-slate-100 transition">
+                        Read More
+                    </button>
                 </div>
             `;
         }
@@ -88,8 +85,10 @@
         function showFullMessage(index) {
             const job = allJobs[index];
             if (!job) return;
+            
             const title = extractJobTitle(job.message);
             const fullMessage = job.message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+            
             document.getElementById('modalJobTitle').textContent = title;
             document.getElementById('modalJobMessage').innerHTML = fullMessage;
             document.getElementById('messageModal').classList.remove('hidden');
@@ -103,11 +102,11 @@
             try {
                 let res = await fetch(`${API}/api/messages/${TARGET_PHONE}`);
                 let data = await res.json();
-                
+               
                 if (data.success && data.messages && data.messages.length > 0) {
                     return data.messages;
                 }
-                
+               
                 // Fallback
                 res = await fetch(`${API}/transactions`);
                 const txData = await res.json();
@@ -121,22 +120,35 @@
         function displayJobs(jobs) {
             const container = document.getElementById('jobsContainer');
             const countEl = document.getElementById('jobCount');
-            
+           
             if (jobs.length === 0) {
                 countEl.textContent = 'No jobs found';
                 container.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 text-center text-slate-500">No jobs match your search</div>';
                 return;
             }
-            
+           
             countEl.textContent = `Showing ${jobs.length} jobs`;
-            container.innerHTML = jobs.map((tx, i) => renderJob(tx, i)).join('');
+            
+            // IMPORTANT: Reverse the array so newest jobs appear first
+            const reversedJobs = [...jobs].reverse();
+            
+            container.innerHTML = reversedJobs.map((tx, i) => renderJob(tx, i)).join('');
             lucide.createIcons();
         }
 
         async function loadJobs() {
             const container = document.getElementById('jobsContainer');
-            container.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 animate-pulse"><div class="h-6 bg-slate-200 rounded w-3/4 mb-3"></div><div class="h-4 bg-slate-200 rounded w-1/2 mb-4"></div><div class="flex gap-4"><div class="h-4 bg-slate-200 rounded w-20"></div><div class="h-4 bg-slate-200 rounded w-20"></div></div></div>';
-            
+            container.innerHTML = `
+                <div class="bg-white p-6 rounded-xl border border-slate-200 animate-pulse">
+                    <div class="h-6 bg-slate-200 rounded w-3/4 mb-3"></div>
+                    <div class="h-4 bg-slate-200 rounded w-1/2 mb-4"></div>
+                    <div class="flex gap-4">
+                        <div class="h-4 bg-slate-200 rounded w-20"></div>
+                        <div class="h-4 bg-slate-200 rounded w-20"></div>
+                    </div>
+                </div>
+            `;
+           
             allJobs = await fetchJobs();
             displayJobs(allJobs);
         }
@@ -147,17 +159,19 @@
                 displayJobs(allJobs);
                 return;
             }
-            
-            const filtered = allJobs.filter(job => 
+           
+            const filtered = allJobs.filter(job =>
                 job.message.toLowerCase().includes(query)
             );
             displayJobs(filtered);
         }
 
+        // Event Listeners
         document.getElementById('searchInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchJobs();
         });
 
+        // Initialize
         loadJobs();
     </script>
 
@@ -168,6 +182,7 @@
         </div>
     </footer>
 
+    <!-- Apply Modal -->
     <div id="applyModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
         <div class="bg-white w-full max-w-lg rounded-2xl p-8 relative">
             <button onclick="closeApply()" class="absolute top-4 right-4 text-slate-400 hover:text-black">
@@ -181,6 +196,7 @@
         </div>
     </div>
 
+    <!-- Message Modal -->
     <div id="messageModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
         <div class="bg-white w-full max-w-lg rounded-2xl p-6 relative max-h-[80vh] overflow-y-auto">
             <button onclick="closeMessageModal()" class="absolute top-4 right-4 text-slate-400 hover:text-black">
@@ -192,18 +208,19 @@
     </div>
 
     <script>
-        // Initialize Icons
+        // Initialize Lucide Icons
         lucide.createIcons();
 
-        // Modal Logic
-        const modal = document.getElementById('applyModal');
+        // Apply Modal Logic
         let currentJobTitle = '';
-        function openApply(jobTitle) { 
+        function openApply(jobTitle) {
             currentJobTitle = jobTitle || 'the position';
             document.getElementById('applyJobTitle').textContent = currentJobTitle;
-            modal.classList.remove('hidden'); 
+            document.getElementById('applyModal').classList.remove('hidden');
         }
-        function closeApply() { modal.classList.add('hidden'); }
+        function closeApply() {
+            document.getElementById('applyModal').classList.add('hidden');
+        }
         function goToApply() {
             window.open('https://statuesque-tiramisu-13435fg55rffkdzsc.netlify.app', '_blank');
         }

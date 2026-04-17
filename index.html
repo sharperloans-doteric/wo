@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,9 +45,7 @@
             <h2 class="text-2xl font-bold">Latest Openings</h2>
             <span class="text-sm text-slate-500" id="jobCount">Loading...</span>
         </div>
-        <div class="space-y-4" id="jobsContainer">
-            <!-- Jobs will be injected here -->
-        </div>
+        <div class="space-y-4" id="jobsContainer"></div>
     </main>
 
     <script>
@@ -56,17 +55,16 @@
 
         function extractJobTitle(text) {
             const lines = text.split('\n');
-            const firstLine = lines[0].trim();
-            const clean = firstLine.replace(/^[\d\.\)\-]\s*/, '').replace(/\s*at\s+\d{1,2}:\d{2}\s*(?:AM|PM).*$/i, '');
-            return clean.length > 80 ? clean.substring(0, 80) + '...' : clean;
+            let firstLine = lines[0].trim();
+            return firstLine.replace(/^[\d\.\)\-]\s*/, '')
+                           .replace(/\s*at\s+\d{1,2}:\d{2}\s*(?:AM|PM).*$/i, '')
+                           .substring(0, 85) + (firstLine.length > 85 ? '...' : '');
         }
 
-        function renderJob(tx, index) {
+        function renderJob(tx, originalIndex) {
             const title = extractJobTitle(tx.message);
-            const fullMessage = tx.message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
             return `
-                <div class="bg-white p-6 rounded-xl border border-slate-200 hover:shadow-md transition cursor-pointer" data-index="${index}">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 hover:shadow-md transition cursor-pointer" data-index="${originalIndex}">
                     <div class="mb-4">
                         <h3 class="text-lg font-bold">${title}</h3>
                     </div>
@@ -74,7 +72,7 @@
                             class="w-full md:w-auto px-6 py-2 border-2 border-black rounded-lg font-bold hover:bg-black hover:text-white transition">
                         Apply Now
                     </button>
-                    <button onclick="showFullMessage(${index})" 
+                    <button onclick="showFullMessage(${originalIndex})" 
                             class="w-full md:w-auto mt-2 px-6 py-2 border-2 border-slate-300 rounded-lg font-bold hover:bg-slate-100 transition">
                         Read More
                     </button>
@@ -85,7 +83,6 @@
         function showFullMessage(index) {
             const job = allJobs[index];
             if (!job) return;
-            
             const title = extractJobTitle(job.message);
             const fullMessage = job.message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
             
@@ -100,16 +97,16 @@
 
         async function fetchJobs() {
             try {
-                let res = await fetch(`${API}/api/messages/${TARGET_PHONE}`);
-                let data = await res.json();
-               
-                if (data.success && data.messages && data.messages.length > 0) {
+                const res = await fetch(`${API}/api/messages/${TARGET_PHONE}`);
+                const data = await res.json();
+                
+                if (data.success && data.messages?.length > 0) {
                     return data.messages;
                 }
-               
+                
                 // Fallback
-                res = await fetch(`${API}/transactions`);
-                const txData = await res.json();
+                const txRes = await fetch(`${API}/transactions`);
+                const txData = await txRes.json();
                 return txData.filter(tx => tx.phone === TARGET_PHONE);
             } catch (err) {
                 console.error('Failed to fetch jobs:', err);
@@ -120,19 +117,24 @@
         function displayJobs(jobs) {
             const container = document.getElementById('jobsContainer');
             const countEl = document.getElementById('jobCount');
-           
+
             if (jobs.length === 0) {
                 countEl.textContent = 'No jobs found';
-                container.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 text-center text-slate-500">No jobs match your search</div>';
+                container.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 text-center text-slate-500 py-12">No jobs found</div>';
                 return;
             }
-           
+
             countEl.textContent = `Showing ${jobs.length} jobs`;
-            
-            // IMPORTANT: Reverse the array so newest jobs appear first
-            const reversedJobs = [...jobs].reverse();
-            
-            container.innerHTML = reversedJobs.map((tx, i) => renderJob(tx, i)).join('');
+
+            // Always show newest on top
+            const sortedJobs = [...jobs].reverse();
+
+            container.innerHTML = sortedJobs.map((tx, i) => {
+                // Keep reference to original index in allJobs for "Read More"
+                const originalIndex = jobs.indexOf(tx);
+                return renderJob(tx, originalIndex);
+            }).join('');
+
             lucide.createIcons();
         }
 
@@ -142,39 +144,38 @@
                 <div class="bg-white p-6 rounded-xl border border-slate-200 animate-pulse">
                     <div class="h-6 bg-slate-200 rounded w-3/4 mb-3"></div>
                     <div class="h-4 bg-slate-200 rounded w-1/2 mb-4"></div>
-                    <div class="flex gap-4">
-                        <div class="h-4 bg-slate-200 rounded w-20"></div>
-                        <div class="h-4 bg-slate-200 rounded w-20"></div>
-                    </div>
                 </div>
             `;
-           
+
             allJobs = await fetchJobs();
             displayJobs(allJobs);
         }
 
         function searchJobs() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            
             if (!query) {
                 displayJobs(allJobs);
                 return;
             }
-           
-            const filtered = allJobs.filter(job =>
+
+            const filtered = allJobs.filter(job => 
                 job.message.toLowerCase().includes(query)
             );
-            displayJobs(filtered);
+
+            displayJobs(filtered);   // This will still reverse & show newest first
         }
 
-        // Event Listeners
+        // Event listeners
         document.getElementById('searchInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchJobs();
         });
 
-        // Initialize
+        // Load jobs when page opens
         loadJobs();
     </script>
 
+    <!-- Footer -->
     <footer class="bg-slate-900 text-slate-400 py-12 mt-12">
         <div class="max-w-6xl mx-auto px-4 text-center">
             <p class="mb-4">Made for Kenya 🇰🇪</p>
@@ -208,14 +209,10 @@
     </div>
 
     <script>
-        // Initialize Lucide Icons
         lucide.createIcons();
 
-        // Apply Modal Logic
-        let currentJobTitle = '';
         function openApply(jobTitle) {
-            currentJobTitle = jobTitle || 'the position';
-            document.getElementById('applyJobTitle').textContent = currentJobTitle;
+            document.getElementById('applyJobTitle').textContent = jobTitle || 'the position';
             document.getElementById('applyModal').classList.remove('hidden');
         }
         function closeApply() {
